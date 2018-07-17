@@ -13,6 +13,7 @@ export class ServerConnection {
     // make sure the url has http or https prepended -- TODO: check this code
     this._url = options.url.indexOf("http://") || options.url.indexOf("https://") ? options.url : "http://" + options.url;
     this._name = options.name ? options.name : "SAGE2 Server";
+    this._username = options.username ? options.username : "Anon user";
   }
 
   // create vdom.VirtualElement method creates an editable or established server based on _editing state
@@ -78,6 +79,11 @@ export class ServerConnection {
       that._update();
     }
 
+    let usernameChange = function (event: React.FormEvent<HTMLInputElement>) {
+      that._username = (event.target as any).value;
+      that._update();
+    }
+
     let urlChange = function (event: React.FormEvent<HTMLInputElement>) {
       that._url = (event.target as any).value;
       that._update();
@@ -85,6 +91,7 @@ export class ServerConnection {
     
     return (
       <div className="jp-SAGE2-serverConnection">
+      <label>User Name: <input onInput={usernameChange} value={this._username}></input></label>
         <label>Server Name: <input onInput={nameChange} value={this._name}></input></label>
         <label>Address: <input onInput={urlChange} value={this._url}></input></label>
         <div className="jp-SAGE2-serverButtons">
@@ -115,6 +122,19 @@ export class ServerConnection {
   set url(url : string) {
     this._url = url.indexOf("http://") || url.indexOf("https://") ? url : "http://" + url;
   }
+
+  get username() : string {
+    return this._username;
+  }
+
+  // set the name of a connection
+  set username(username : string) {
+    this._username = username;
+
+    // update UI element to match
+  }
+
+
 
   // check if the cell id exists within the connection (as a receiver of changes)
   public isCellRegistered(id : string) {
@@ -160,7 +180,13 @@ export class ServerConnection {
       
       // create image to get correct size
       var i = new Image();
+
+      //title = '[' + this._username + ']: ' + title; 
+
+      let this_username = this._username;
+
       i.onload = function () {
+        
         let imageToSend = {
           src: base64,
           sender: window.location.href,
@@ -168,7 +194,8 @@ export class ServerConnection {
           url: window.location.href,
           mime,
           width: i.width,
-          height: i.height
+          height: i.height,
+          username: this_username,
         };
         
         console.log(imageToSend);
@@ -179,6 +206,7 @@ export class ServerConnection {
           width: i.width,
           height: i.height,
           title,
+          username: this_username,
           // cellId: cellId
         });
 
@@ -351,6 +379,7 @@ export class ServerConnection {
   // general server info
   private _name : string = "SAGE2 Server";
   private _url : string = "http://sage2.server.address.com";
+  private _username : string = "Anon user";
   private _id : string = null;
   private _serverInformation: any = {};
 
@@ -378,16 +407,23 @@ export
 namespace ServerConnection {
   export
   interface IOptions {
+
+    // A name for the user
+    username?: string
+
     // A name for the server
     name?: string,
 
     // the server's url
-    url: string
+    url: string,
+
+    
   };
 
   export
   const defaultOptions : IOptions = {
     url: 'https://localhost:9090',
-    name: "Local SAGE2 Server"
+    name: "Local SAGE2 Server",
+    username: "Anon user"
   };
 }
