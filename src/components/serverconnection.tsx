@@ -27,15 +27,15 @@ export class ServerConnection {
     let remove = () => {
       // close websocket
       this._wsio.close();
-      // dispose of item      
+      // dispose of item
       this._remove.dispose();
     }
     let edit = () => this.startEditing();
-    let favorite = () => { 
+    let favorite = () => {
       this._favorite(true);
       this._update();
     }
-    let unfavorite = () => { 
+    let unfavorite = () => {
       this._favorite(false);
       this._update();
     }
@@ -66,7 +66,7 @@ export class ServerConnection {
           <ServerInfo version={this._serverInformation.version}></ServerInfo>
       </div>
     );
-  } 
+  }
 
   // construct vdom VirtualElement for editable server -- contains input fields for name/address
   private editableServer(): React.ReactElement<any> {
@@ -88,7 +88,7 @@ export class ServerConnection {
       that._url = (event.target as any).value;
       that._update();
     }
-    
+
     return (
       <div className="jp-SAGE2-serverConnection">
       <label>User Name: <input onInput={usernameChange} value={this._username}></input></label>
@@ -177,16 +177,16 @@ export class ServerConnection {
 
     if (mime.indexOf("image") >= 0) {
       let base64 = `data:${mime};base64,` + data;
-      
+
       // create image to get correct size
       var i = new Image();
 
-      //title = '[' + this._username + ']: ' + title; 
+      //title = '[' + this._username + ']: ' + title;
 
       let this_username = this._username;
 
       i.onload = function () {
-        
+
         let imageToSend = {
           src: base64,
           sender: window.location.href,
@@ -197,9 +197,9 @@ export class ServerConnection {
           height: i.height,
           username: this_username,
         };
-        
+
         console.log(imageToSend);
-        
+
         that._wsio.emit('updateJupyterSharing', {
           id: `${that._id}~${cellID}`,
           src: base64,
@@ -212,8 +212,8 @@ export class ServerConnection {
 
         // that._wsio.emit("loadImageFromBuffer", imageToSend);
       };
-      
-      i.src = base64; 
+
+      i.src = base64;
     }
 
     // maybe transition to using existing JupyterSharing messages (this would have Jupyter app already to use for content)
@@ -221,13 +221,17 @@ export class ServerConnection {
 
   // send notebook data to SAGE2 through http POST
   public sendNotebook(file: File, title: string) {
+    console.log(file);
+    console.log(title);
+
     var formdata = new FormData();
     formdata.append("file0", file);
     formdata.append("dropX", "0");
     formdata.append("dropY", "0");
     formdata.append("open", "true");
+    formdata.append("title",title);
 
-    formdata.append("SAGE2_ptrName", localStorage.SAGE2_ptrName);
+    formdata.append("SAGE2_ptrName", this._username);
     formdata.append("SAGE2_ptrColor", localStorage.SAGE2_ptrColor);
 
     var sendFile = new XMLHttpRequest();
@@ -281,7 +285,7 @@ export class ServerConnection {
 
     this._wsio = new WebsocketIO(this._url.replace("http", "ws"));
     this._wsio.logger = this.log.bind(this); // pass logging method for methods into WebsocketIO
-    
+
     // reinitialize server information object
     this._serverInformation = {};
 
@@ -305,7 +309,7 @@ export class ServerConnection {
         that._wsio.emit('addClient', clientDescription);
         that._wsio.emit('requestStoredFiles');
     });
-    
+
     // update UI
     this._update();
   }
@@ -395,7 +399,7 @@ export class ServerConnection {
 
   // state variable for if the server is being edited
   private _editing: boolean = true;
-  
+
   // functions passed in for plugin-wide behavior
   private _remove: DisposableDelegate;
   private _update: Function;
@@ -417,7 +421,7 @@ namespace ServerConnection {
     // the server's url
     url: string,
 
-    
+
   };
 
   export
