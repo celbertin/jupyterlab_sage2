@@ -398,8 +398,11 @@ export
               if (!connection.isCellRegistered(cellModel.id)) {
                 console.log("Register new Cell for updates", cellModel.id);
 
-                // set as registered cell for onchange 
-                connection.setCellRegistered(cellModel.id, outputArea.changed, mime);
+                // set as registered cell for onchange
+                // Don't do it for html table
+                if (mime.indexOf("html") < 0){ 
+                  connection.setCellRegistered(cellModel.id, outputArea.changed, mime);
+                }
                 
                 // update on cell change
                 outputArea.changed.connect(function (outputAreaModel: any) {

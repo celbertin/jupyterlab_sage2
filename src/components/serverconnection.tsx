@@ -186,6 +186,40 @@ export class ServerConnection {
       };
       
       i.src = base64; 
+    } else if (mime.indexOf("html") >= 0) {
+
+        let title_test = 'tabla_vane.html';
+        let text = "<!DOCTYPE html> <html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><title>My Example</title>"
+        
+        text += "<style> table {font-family: arial, sans-serif; border-collapse: collapse; width: 100%;} td, th {border: 1px solid #dddddd; ";
+        text += "text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #dddddd;} </style>";
+        text += " </head><body>";
+        text += data;
+        text += "</body></html>"
+        let file = new File([text], title_test);
+
+        var formdata = new FormData();
+        formdata.append("file0", file);
+        formdata.append("dropX", "0");
+        formdata.append("dropY", "0");
+        formdata.append("open", "true");
+
+        formdata.append("SAGE2_ptrName", localStorage.SAGE2_ptrName);
+        formdata.append("SAGE2_ptrColor", localStorage.SAGE2_ptrColor);
+
+        var sendFile = new XMLHttpRequest();
+        // add the request into the array
+        // build the URL
+        var server = 'https://' + that._serverInformation.config.host + ':' + that._serverInformation.config.secure_port;
+        server += '/upload';
+        sendFile.open("POST", server, true);
+        (sendFile.upload as any).id = "file0";
+
+        sendFile.addEventListener('load', function(ev) {
+          console.log(this.response);
+        }, false);
+
+        sendFile.send(formdata);
     }
 
     // maybe transition to using existing JupyterSharing messages (this would have Jupyter app already to use for content)
