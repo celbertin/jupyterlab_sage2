@@ -5,14 +5,7 @@ import * as React from 'react';
 import WebsocketIO from '../websocket.io';
 
 import { Log } from './log';
-
-/* tslint:disable */
-/**
- * We have configured the TSX transform to look for the h function in the local
- * module.
- */
-// const h = vdom.h;
-/* tslint:enable */
+import { ServerInfo } from './server-info';
 
 export class ServerConnection {
   constructor(options : ServerConnection.IOptions) {
@@ -48,31 +41,6 @@ export class ServerConnection {
 
     let classNames = "jp-SAGE2-serverConnection" + (this._connected ? "" : " jp-SAGE2-serverNotConnected");
 
-    // socket log element -- TODO: maybe abstract this into another ui-element?
-
-    // server version information 
-    let serverInfo: React.ReactElement<any> = this._serverInformation.version ? (
-      <div className="jp-SAGE2-versionInfo">
-        Version:
-          <span>
-          {this._serverInformation.version.base}
-        </span>
-        <span>
-          {this._serverInformation.version.branch}
-        </span>
-        <span>
-          {this._serverInformation.version.commit}
-        </span>
-        <span>
-          {this._serverInformation.version.date}
-        </span>
-      </div>
-    ) : (
-      <div className="jp-SAGE2-versionInfo">
-        No Version Info Found
-      </div>
-    );
-
     // icon for favorite connection status
     let favicon: React.ReactElement<any> = this._isFavorite() ? (
       <i className="favServer fa fa-star fa-2x" aria-hidden="true" onClick={unfavorite}></i>
@@ -93,9 +61,8 @@ export class ServerConnection {
             Remove
           </button>
         </div>
-          <Log items={this._log}>
-          </Log>
-          {serverInfo}
+          <Log items={this._log}></Log>
+          <ServerInfo version={this._serverInformation.version}></ServerInfo>
       </div>
     );
   } 
@@ -219,6 +186,40 @@ export class ServerConnection {
       };
       
       i.src = base64; 
+    } else if (mime.indexOf("html") >= 0) {
+
+        let title_test = 'tabla_vane.html';
+        let text = "<!DOCTYPE html> <html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><title>My Example</title>"
+        
+        text += "<style> table {font-family: arial, sans-serif; border-collapse: collapse; width: 100%;} td, th {border: 1px solid #dddddd; ";
+        text += "text-align: left; padding: 8px;} tr:nth-child(even) {background-color: #dddddd;} </style>";
+        text += " </head><body>";
+        text += data;
+        text += "</body></html>"
+        let file = new File([text], title_test);
+
+        var formdata = new FormData();
+        formdata.append("file0", file);
+        formdata.append("dropX", "0");
+        formdata.append("dropY", "0");
+        formdata.append("open", "true");
+
+        formdata.append("SAGE2_ptrName", localStorage.SAGE2_ptrName);
+        formdata.append("SAGE2_ptrColor", localStorage.SAGE2_ptrColor);
+
+        var sendFile = new XMLHttpRequest();
+        // add the request into the array
+        // build the URL
+        var server = 'https://' + that._serverInformation.config.host + ':' + that._serverInformation.config.secure_port;
+        server += '/upload';
+        sendFile.open("POST", server, true);
+        (sendFile.upload as any).id = "file0";
+
+        sendFile.addEventListener('load', function(ev) {
+          console.log(this.response);
+        }, false);
+
+        sendFile.send(formdata);
     }
 
     // maybe transition to using existing JupyterSharing messages (this would have Jupyter app already to use for content)

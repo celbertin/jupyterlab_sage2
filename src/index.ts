@@ -234,14 +234,16 @@ export
       selectedCell = (shell.currentWidget as NotebookPanel).notebook.activeCell as any;
       let outputs = selectedCell.model.outputs
 
-      if (outputs && outputs.get(0)) {
-        let outputData = outputs.get(0).data;
+      for(let cell_output of outputs.list._array){
+        if (outputs && cell_output) {
+          let outputData = cell_output.data;
 
-        for (let mime of supportedCellOutputs) {
-          if (outputData[mime]) {
-            // console.log("Found data in cell for MIME", mime);
-            hasDataToSend = true;
-            break;
+          for (let mime of supportedCellOutputs) {
+            if (outputData[mime]) {
+              // console.log("Found data in cell for MIME", mime);
+              hasDataToSend = true;
+              break;
+            }
           }
         }
       }
@@ -389,41 +391,49 @@ export
           let codeCell = (notebook.activeCell) as any;
           let cellModel = codeCell.model;
           let outputArea = cellModel.outputs;
-          let outputData = outputArea.get(0).data;
 
-          let dataToSend = null;
+          for(let cell_output of outputArea.list._array){ 
 
-          // check mime tipe of data -- prioritizing the most highly ranked
-          for (let mime of supportedCellOutputs) {
-            if (outputData[mime]) {
-              // send data to connection if supported type
+            let outputData = cell_output.data;
+            let dataToSend = null;
 
-              // if the cell is not registered for updates, register it
-              if (!connection.isCellRegistered(cellModel.id)) {
-                console.log("Register new Cell for updates", cellModel.id);
+            // check mime tipe of data -- prioritizing the most highly ranked
+            for (let mime of supportedCellOutputs) {
+              if (outputData[mime]) {
+                // send data to connection if supported type
 
-                // set as registered cell for onchange 
-                connection.setCellRegistered(cellModel.id, outputArea.changed, mime);
-                
-                // update on cell change
-                outputArea.changed.connect(function (outputAreaModel: any) {
-                  let newOutput = outputAreaModel.get(0);
-  
-                  // send changed output to SAGE2
-                  if (newOutput && newOutput.data[mime]) {
-                    this.sendCellData(newOutput.data[mime], mime, `${shell.currentWidget.title.label} [${notebook.activeCellIndex}]`, cellModel.id);
-                  }  
-                }, connection);
+                // if the cell is not registered for updates, register it
+                if (!connection.isCellRegistered(cellModel.id)) {
+                  console.log("Register new Cell for updates", cellModel.id);
+
+                  // set as registered cell for onchange 
+                  connection.setCellRegistered(cellModel.id, outputArea.changed, mime);
+                  
+                  // update on cell change
+                  outputArea.changed.connect(function (outputAreaModel: any) {
+
+                    // I added this for elements in the cell
+                    for(let cell_output of outputArea.list._array){ 
+                      let newOutput = cell_output;
+                      // I added this for supportted mimes
+                      for (let mime of supportedCellOutputs) {
+                        // send changed output to SAGE2
+                        if (newOutput && newOutput.data[mime]) {
+                          this.sendCellData(newOutput.data[mime], mime, `${shell.currentWidget.title.label} [${notebook.activeCellIndex}]`, cellModel.id);
+                        }  
+                      }
+                    }
+                  }, connection);
+                }
+
+                // cell data send to chosen SAGE2 connection 
+                console.log("Send data of MIME", mime, "content");
+                dataToSend = outputData[mime];
+                connection.sendCellData(dataToSend, mime, `${shell.currentWidget.title.label} [${notebook.activeCellIndex}]`, cellModel.id);
+                //break;
               }
-
-              // cell data send to chosen SAGE2 connection 
-              console.log("Send data of MIME", mime, "content");
-              dataToSend = outputData[mime];
-              connection.sendCellData(dataToSend, mime, `${shell.currentWidget.title.label} [${notebook.activeCellIndex}]`, cellModel.id);
-              break;
             }
           }
-
           return;
         } else {
           console.log("Cancel send operation");
@@ -496,7 +506,7 @@ export
       let codeCell = (notebook.activeCell) as any;
       let cellModel = codeCell.model;
       let outputArea = cellModel.outputs;
-      let outputData = outputArea.get(0).data;
+      let outputData = outputArea.get(1).data;
 
       let dataToSend = null;
 
@@ -513,7 +523,7 @@ export
 
             // update on cell change
             outputArea.changed.connect(function (outputAreaModel: any) {
-              let newOutput = outputAreaModel.get(0);
+              let newOutput = outputAreaModel.get(1);
 
               // send updated data to SAGE2
               if (newOutput && newOutput.data[mime]) {
